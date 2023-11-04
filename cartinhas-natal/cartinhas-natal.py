@@ -1,8 +1,9 @@
 import docx
-import pyexcel_ods
+import csv
 import os
 import docx2pdf
 import fitz
+import datetime
 
 def remove_espaco(str_espaco):
     if len(str_espaco) == 0: return str_espaco
@@ -13,16 +14,24 @@ def remove_espaco(str_espaco):
     while nova_str[-1] == " ":
         nova_str = nova_str[:-1]
     return nova_str
-
+'''
+def calcula_idade(nascimento):
+    idade = datetime.date(int(nascimento.split("/")[2]), int(nascimento.split("/")[1]),
+                          int(nascimento.split("/")[0]))
+    print(datetime.datetime.today())
+    idade = datetime.datetime.today() - idade
+    print(idade)
+'''    
 def trata_dados(dados_criancas):
     novos_dados = dados_criancas
     novas_criancas = []
     for crianca in novos_dados:
         if crianca == {}: continue
-        for key in ["criança", "idade", "calçado", "camisa", "calça", "sexo"]:
+        for key in ["criança", "nascimento", "calçado", "camisa", "calça", "sexo"]:
             crianca[key] = remove_espaco(str(crianca[key]))
-        for key in ["idade", "calçado", "camisa", "calça"]:
+        for key in ["calçado", "camisa", "calça"]:
             crianca[key] = crianca[key].replace("a", " anos").replace("m", " meses")
+        #crianca["idade"] = calcula_idade(crianca["nascimento"])
         novas_criancas.append(crianca)
     return novas_criancas
 
@@ -31,7 +40,7 @@ def verifica_completo(crianca):
     if not os.path.isfile("fotos\\_{}.jpg".format(crianca["criança"])):
         print("Não encontrei a foto dx {}!".format(crianca["criança"]))
         return False
-    keys_importantes = ["criança", "idade", "calçado", "camisa", "calça", "sexo"]
+    keys_importantes = ["criança", "nascimento", "calçado", "camisa", "calça", "sexo"]
     if any(len(crianca[x]) == 0 for x in keys_importantes):
         print("{} está com dados incompletos!".format(crianca["criança"]))
         return False
@@ -39,8 +48,8 @@ def verifica_completo(crianca):
 
 def adiciona_intro(document, sexo):
     novo_document = document
-    if sexo == "M": corpo = "Este é o seu afilhado no Natal 2022. Presenteie-o"
-    elif sexo == "F": corpo = "Esta é a sua afilhada no Natal 2022. Presenteie-a"
+    if sexo == "M": corpo = "Este é o seu afilhado no Natal 2023. Presenteie-o"
+    elif sexo == "F": corpo = "Esta é a sua afilhada no Natal 2023. Presenteie-a"
     run = novo_document.paragraphs[1].runs[0]
     run.text = run.text.format(corpo)
     return novo_document
@@ -75,7 +84,7 @@ def adiciona_dados(table, document, crianca):
     nova_table.cell(0, 1).paragraphs[0].runs[0].font.size = docx.shared.Pt(24)
     nova_table.cell(0, 1).paragraphs[0].alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.LEFT
     nova_table.cell(0, 1).add_paragraph()
-    nova_table.cell(1, 1).paragraphs[0].text = crianca["idade"]
+    nova_table.cell(1, 1).paragraphs[0].text = crianca["nascimento"]
     nova_table.cell(1, 1).paragraphs[0].style = document.styles["Normal"]
     run = nova_table.cell(2, 1).paragraphs[0].add_run(crianca["camisa"])
     run.bold = True
@@ -89,10 +98,9 @@ def adiciona_dados(table, document, crianca):
             run.font.size = docx.shared.Pt(18)
     return nova_table
     
-dados_planilha = pyexcel_ods.get_data("medidas.ods")["Planilha1"]
-dados_criancas = []
-for linha in dados_planilha[1:]:
-    dados_criancas.append(dict(zip(dados_planilha[0], linha)))
+
+with open("Planilha Natal 2023 - Sheet1.csv", "r", encoding="utf-8") as f:
+    dados_criancas = [x for x in csv.DictReader(f)]
 dados_criancas = trata_dados(dados_criancas)
 
 #TODO conferir fotos na pasta que ainda estão sem donos
