@@ -14,30 +14,42 @@ def remove_espaco(str_espaco):
     while nova_str[-1] == " ":
         nova_str = nova_str[:-1]
     return nova_str
-'''
+
 def calcula_idade(nascimento):
     idade = datetime.date(int(nascimento.split("/")[2]), int(nascimento.split("/")[1]),
                           int(nascimento.split("/")[0]))
-    print(datetime.datetime.today())
-    idade = datetime.datetime.today() - idade
-    print(idade)
-'''    
+    idade = datetime.datetime.now().date() - idade
+    dias = (idade.days)
+    anos = int(dias/365.25)
+    meses = int(((dias/365.25) - int(dias/366.25)) * 12)
+    if anos == 1:
+        nome_anos = "ano"
+    else:
+        nome_anos = "anos"
+    if meses == 1:
+        nome_meses = "mês"
+    else:
+        nome_meses = "meses"
+    return("{} {} e {} {}".format(anos, nome_anos, meses, nome_meses))
+ 
 def trata_dados(dados_criancas):
     novos_dados = dados_criancas
     novas_criancas = []
     for crianca in novos_dados:
-        if crianca == {}: continue
+        if crianca["criança"] == "": continue
         for key in ["criança", "nascimento", "calçado", "camisa", "calça", "sexo"]:
             crianca[key] = remove_espaco(str(crianca[key]))
         for key in ["calçado", "camisa", "calça"]:
             crianca[key] = crianca[key].replace("a", " anos").replace("m", " meses")
-        #crianca["idade"] = calcula_idade(crianca["nascimento"])
+        if crianca["nascimento"] != "": 
+            crianca["idade"] = calcula_idade(crianca["nascimento"])
         novas_criancas.append(crianca)
     return novas_criancas
 
 def verifica_completo(crianca):
     if crianca == {}: return False
-    if not os.path.isfile("fotos\\_{}.jpg".format(crianca["criança"])):
+    if not os.path.isfile(os.path.abspath("E:/Área de Trabalho/natais centro/2023/2-fotos/_{}.jpg"\
+                              .format(crianca["criança"]))):
         print("Não encontrei a foto dx {}!".format(crianca["criança"]))
         return False
     keys_importantes = ["criança", "nascimento", "calçado", "camisa", "calça", "sexo"]
@@ -84,7 +96,7 @@ def adiciona_dados(table, document, crianca):
     nova_table.cell(0, 1).paragraphs[0].runs[0].font.size = docx.shared.Pt(24)
     nova_table.cell(0, 1).paragraphs[0].alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.LEFT
     nova_table.cell(0, 1).add_paragraph()
-    nova_table.cell(1, 1).paragraphs[0].text = crianca["nascimento"]
+    nova_table.cell(1, 1).paragraphs[0].text = crianca["idade"]
     nova_table.cell(1, 1).paragraphs[0].style = document.styles["Normal"]
     run = nova_table.cell(2, 1).paragraphs[0].add_run(crianca["camisa"])
     run.bold = True
@@ -99,12 +111,12 @@ def adiciona_dados(table, document, crianca):
     return nova_table
     
 
-with open("Planilha Natal 2023 - Sheet1.csv", "r", encoding="utf-8") as f:
+with open("Planilha Natal 2023 - dados.csv", "r", encoding="utf-8") as f:
     dados_criancas = [x for x in csv.DictReader(f)]
 dados_criancas = trata_dados(dados_criancas)
 
 #TODO conferir fotos na pasta que ainda estão sem donos
-
+'''
 with open ("docs\\modelo.docx", "rb") as f:
     for crianca in dados_criancas:
         if not verifica_completo(crianca):
@@ -112,22 +124,22 @@ with open ("docs\\modelo.docx", "rb") as f:
         document = docx.Document(f)
         document = adiciona_intro(document, crianca["sexo"])
         table = document.tables[-1]
-        table = adiciona_foto(table, document, "fotos\\_{}.jpg"\
-                              .format(crianca["criança"]))
+        table = adiciona_foto(table, document, os.path.abspath("E:/Área de Trabalho/natais centro/2023/2-fotos/_{}.jpg"\
+                              .format(crianca["criança"])))
         table = adiciona_dados(table, document, crianca)
-        document.save("cartinhas\\docx\\{}.docx"\
-                      .format(trata_nome(crianca["criança"])))
+        document.save(os.path.abspath("E:/Área de Trabalho/natais centro/2023/1-cartinhas/docx/{}.docx"\
+                      .format(trata_nome(crianca["criança"]))))
 
-for file in os.listdir("cartinhas\\docx"):
+for file in os.listdir("E:\\Área de Trabalho\\natais centro\\2023\\cartinhas\\docx"):
     if "~" in file: continue
-    docx2pdf.convert(os.path.abspath("cartinhas/docx/"+file), 
-                     os.path.abspath("cartinhas/pdf/"+file[:-4]+"pdf"))
-    doc = fitz.open("cartinhas\\pdf\\"+file[:-4]+"pdf")
+    docx2pdf.convert(os.path.abspath("E:/Área de Trabalho/natais centro//docx/"+file), 
+                     os.path.abspath("E:/Área de Trabalho/natais centro/2023/1-cartinhas/pdf/"+file[:-4]+"pdf"))
+    doc = fitz.open(os.path.abspath("E:/Área de Trabalho/natais centro/2023/1-cartinhas/pdf/"+file[:-4]+"pdf"))
     page = doc.load_page(0)  # number of page
     pix = page.get_pixmap(matrix=fitz.Matrix(300/72,300/72))
-    pix.save("cartinhas\\img\\" + file[:-4]+"png")
+    pix.save(os.path.abspath("E:/Área de Trabalho/natais centro/2023/1-cartinhas/png/"+file[:-4]+"png"))
 
-
+'''
 document = docx.Document()
 table = document.add_table(1, 2)
 linha_atual = 0
@@ -137,7 +149,8 @@ for crianca in dados_criancas:
         continue
     cell = table.cell(linha_atual, 0)
     cell.paragraphs[0].add_run()
-    cell.paragraphs[0].runs[0].add_picture("fotos\\_{}.jpg".format(crianca["criança"]),
+    cell.paragraphs[0].runs[0].add_picture(os.path.abspath("E:/Área de Trabalho/natais centro/2023/2-fotos/_{}.jpg"\
+                              .format(crianca["criança"])),
                                            height = docx.shared.Cm(4))
     cell = table.cell(linha_atual, 1)
     cell.text = crianca["criança"]
